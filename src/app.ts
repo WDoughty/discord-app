@@ -1,82 +1,42 @@
 import dotenv from "dotenv";
 import express from "express";
-import discord, { Client, CommandInteraction, Intents, Interaction } from "discord.js";
+import { Client, Intents, Collection } from "discord.js";
 import { REST } from "@discordjs/rest";
-import { Routes } from 'discord-api-types/v9';
+import * as fs from 'fs';
 
 
 const app = express();
 
-
-dotenv.config();
-
-const commands = [
-    {
-        name: 'test',
-        description: 'Test Reply!'
-    },
-    {
-        name: 'user',
-        description: 'Displays user info'
-    },
-    {
-        name: 'dmme',
-        description: 'sends a dm'
-    }
-];
-
-const rest = new REST({version: '9'}).setToken((process.env.TOKEN as string));
-
-(async () => {
-    try {
-      console.log('Started refreshing application (/) commands.');
-  
-      await rest.put(
-        Routes.applicationGuildCommands((process.env.APP_ID as string), (process.env.GUILD_ID as string)),
-        { body: commands },
-      );
-  
-      console.log('Successfully reloaded application (/) commands.');
-    } catch (error) {
-      console.error(error);
-    }
-  })();
+dotenv.config({path:'../.env'});
 
 const client = new Client({intents: [Intents.FLAGS.GUILDS]});
+export var commands = new Collection<any,any>();
 
-client.on('ready', ()=>{
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+for(const file of commandFiles){
+    const command = require(`./commands/${file}`);
+    commands.set(command.data.name, command);
+}
+
+client.once('ready', ()=>{
     console.log(`Logged in as ${client.user?.tag}.`);
 });
 
-client.on('interactionCreate', async interaction=>{
-    if(!interaction.isCommand()){
-        return;
-    }
+client.on('interactionCreate', async interaction => {
+	if (!interaction.isCommand()) return;
 
-    if(interaction.commandName === 'test'){
-        await sendMessage('Testing bot reply', interaction);
-    }
+	const command = commands.get(interaction.commandName);
 
-    if(interaction.commandName === 'user'){
-        await sendMessage(`Username :${interaction.user.username}`, interaction);
-    }
+	if (!command) return;
 
-    if(interaction.commandName === 'dmme'){
-        await sendMessageToUser(`${interaction.user.username}`, interaction);      
-    }
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+	}
 });
-
-
-function sendMessage(message: string, interaction: CommandInteraction): void {
-    interaction.reply(message);
-}
-
-function sendMessageToUser(message: string, interaction: CommandInteraction): void {
-    interaction.user.createDM().then(result =>{
-        result.send(message);
-    }).catch(err => console.log(err));
-}
-
 
 client.login((process.env.TOKEN as string));
 
