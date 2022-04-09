@@ -30,11 +30,13 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const rest_1 = require("@discordjs/rest");
 const v9_1 = require("discord-api-types/v9");
 const fs = __importStar(require("fs"));
-dotenv_1.default.config({ path: '../.env' });
+const path_1 = __importDefault(require("path"));
+dotenv_1.default.config({ path: __dirname + './../.env' });
 const commands = [];
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+let path1 = path_1.default.resolve(__dirname, './commands');
+const commandFiles = fs.readdirSync(path1).filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
+    const command = require(`${path1}/${file}`);
     commands.push(command.data.toJSON());
 }
 const rest = new rest_1.REST({ version: '9' }).setToken(process.env.TOKEN);

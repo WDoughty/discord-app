@@ -40,13 +40,15 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const discord_js_1 = require("discord.js");
 const fs = __importStar(require("fs"));
+const path_1 = __importDefault(require("path"));
 const app = (0, express_1.default)();
-dotenv_1.default.config({ path: '../.env' });
+dotenv_1.default.config({ path: __dirname + './../.env' });
+let path1 = path_1.default.resolve(__dirname, './commands');
 const client = new discord_js_1.Client({ intents: [discord_js_1.Intents.FLAGS.GUILDS] });
 exports.commands = new discord_js_1.Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync(path1).filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
+    const command = require(`${path1}/${file}`);
     exports.commands.set(command.data.name, command);
 }
 client.once('ready', () => {

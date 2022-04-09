@@ -5,7 +5,7 @@
   "main": "src/app.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "node .\\dist\\app.js",
+    "deploy-bot": "node .\\dist\\app.js",
     "deploy-command": "node ./dist/deploy-commands.js"
   },
   "keywords": [],
